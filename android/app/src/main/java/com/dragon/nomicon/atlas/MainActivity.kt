@@ -1,4 +1,4 @@
-package com.dragonnomiconatlas
+package com.dragon.nomicon.atlas
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
