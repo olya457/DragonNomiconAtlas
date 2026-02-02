@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BG = require('../assets/background.png');
 const ICON_BACK = require('../assets/back.png');
@@ -29,6 +30,10 @@ type Phase = 'idle' | 'round' | 'result';
 
 const TOTAL_ROUNDS = 10;
 const ROUND_SECONDS = 20;
+const STORAGE_KEYS = {
+  round: 'fire_rush_round',
+  hitsTotal: 'fire_rush_hits_total',
+};
 
 function passTapsForRound(round: number) {
   const r = Math.max(1, Math.min(round, TOTAL_ROUNDS));
@@ -140,6 +145,7 @@ export default function FireRushScreen({ navigation }: any) {
   const secTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const missTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runningRef = useRef(false);
+
   const pop = useRef(new Animated.Value(0)).current;
   const popup = useRef(new Animated.Value(0)).current;
 
@@ -172,6 +178,35 @@ export default function FireRushScreen({ navigation }: any) {
       useNativeDriver: true,
     }).start();
   }, [popup]);
+
+  const persistProgress = useCallback(async (nextRound: number, nextHitsTotal?: number) => {
+    try {
+      const r = clamp(nextRound, 1, TOTAL_ROUNDS);
+      await AsyncStorage.setItem(STORAGE_KEYS.round, String(r));
+      if (typeof nextHitsTotal === 'number') {
+        await AsyncStorage.setItem(STORAGE_KEYS.hitsTotal, String(Math.max(0, nextHitsTotal)));
+      }
+    } catch {}
+  }, []);
+
+  const loadProgress = useCallback(async () => {
+    try {
+      const rStr = await AsyncStorage.getItem(STORAGE_KEYS.round);
+      const hStr = await AsyncStorage.getItem(STORAGE_KEYS.hitsTotal);
+
+      const rNum = rStr ? parseInt(rStr, 10) : 1;
+      const hNum = hStr ? parseInt(hStr, 10) : 0;
+
+      const safeR = clamp(Number.isFinite(rNum) ? rNum : 1, 1, TOTAL_ROUNDS);
+      const safeH = Math.max(0, Number.isFinite(hNum) ? hNum : 0);
+
+      setRound(safeR);
+      setHitsTotal(safeH);
+    } catch {
+      setRound(1);
+      setHitsTotal(0);
+    }
+  }, []);
 
   const spawnDragon = useCallback(
     (roundNum: number) => {
@@ -230,25 +265,28 @@ export default function FireRushScreen({ navigation }: any) {
     },
     [endRound, spawnDragon, stopAll]
   );
-
-  const resetToFirstPage = useCallback(() => {
-    stopAll();
-    setPhase('idle');
-    setRound(1);
-    setTimeLeft(ROUND_SECONDS);
-    setScore(0);
-    setHitsTotal(0);
-    setVisible(false);
-    setPos({ x: 0, y: 0 });
-    pop.setValue(0);
-    popup.setValue(0);
-  }, [pop, popup, stopAll]);
-
   useFocusEffect(
     useCallback(() => {
-      resetToFirstPage();
-      return () => stopAll();
-    }, [resetToFirstPage, stopAll])
+      let alive = true;
+
+      (async () => {
+        await loadProgress();
+        if (!alive) return;
+        stopAll();
+        setPhase('idle');
+        setTimeLeft(ROUND_SECONDS);
+        setScore(0);
+        setVisible(false);
+        setPos({ x: 0, y: 0 });
+        pop.setValue(0);
+        popup.setValue(0);
+      })();
+
+      return () => {
+        alive = false;
+        stopAll();
+      };
+    }, [loadProgress, pop, popup, stopAll])
   );
 
   const tapSlop = useMemo(() => {
@@ -264,33 +302,46 @@ export default function FireRushScreen({ navigation }: any) {
     if (!visible) return;
 
     setScore(s => s + 1);
-    setHitsTotal(s => s + 1);
+    setHitsTotal(prev => {
+      const next = prev + 1;
+      persistProgress(round, next);
+      return next;
+    });
 
     setVisible(false);
     spawnDragon(round);
-  }, [phase, round, spawnDragon, visible]);
+  }, [phase, persistProgress, round, spawnDragon, visible]);
 
   const needed = useMemo(() => passTapsForRound(round), [round]);
   const passed = score >= needed;
 
   const onPressStart = useCallback(() => startRound(round), [round, startRound]);
 
-  const onNextRound = useCallback(() => {
+  const onNextRound = useCallback(async () => {
     if (round >= TOTAL_ROUNDS) {
+      await persistProgress(1, hitsTotal);
+      stopAll();
+      setPhase('idle');
+      setRound(1);
+      setTimeLeft(ROUND_SECONDS);
+      setScore(0);
+      setVisible(false);
       navigation?.navigate?.('Home');
       return;
     }
+
+    const nextRound = Math.min(TOTAL_ROUNDS, round + 1);
+    await persistProgress(nextRound, hitsTotal);
 
     stopAll();
     setPhase('idle');
     setVisible(false);
     setTimeLeft(ROUND_SECONDS);
     setScore(0);
-    setRound(r => Math.min(TOTAL_ROUNDS, r + 1));
-  }, [navigation, round, stopAll]);
+    setRound(nextRound);
+  }, [hitsTotal, navigation, persistProgress, round, stopAll]);
 
   const onRetry = useCallback(() => {
-
     stopAll();
     setPhase('idle');
     setVisible(false);
@@ -298,7 +349,14 @@ export default function FireRushScreen({ navigation }: any) {
     setScore(0);
   }, [stopAll]);
 
-  const onMenu = useCallback(() => navigation?.navigate?.('Home'), [navigation]);
+  const onMenu = useCallback(() => {
+    stopAll();
+    setPhase('idle');
+    setVisible(false);
+    setTimeLeft(ROUND_SECONDS);
+    setScore(0);
+    navigation?.navigate?.('Home');
+  }, [navigation, stopAll]);
 
   const titleSize = isTiny ? 12 : isSmall ? 13 : 14;
   const mainBtnH = isTiny ? 44 : isSmall ? 48 : 54;
@@ -329,6 +387,7 @@ export default function FireRushScreen({ navigation }: any) {
         return BADGE_5;
     }
   }, [round]);
+
   const popupScale = popup.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] });
   const popupOpacity = popup.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
 
@@ -363,7 +422,9 @@ export default function FireRushScreen({ navigation }: any) {
 
             <View style={[styles.hudPill, { paddingVertical: hudPadV, borderRadius: hudRadius }]}>
               <Text style={[styles.hudLabel, { fontSize: isTiny ? 10 : 11 }]}>SCORE</Text>
-              <Text style={[styles.hudValue, { fontSize: hudFontV }]}>{phase === 'round' ? score : 0}</Text>
+              <Text style={[styles.hudValue, { fontSize: hudFontV }]}>
+                {phase === 'round' ? score : 0}
+              </Text>
             </View>
           </View>
 
@@ -380,7 +441,9 @@ export default function FireRushScreen({ navigation }: any) {
           >
             {phase === 'idle' && (
               <View style={styles.idleOverlay} pointerEvents="none">
-                <Text style={[styles.idleText, { fontSize: isTiny ? 12 : 13 }]}>Press START to begin</Text>
+                <Text style={[styles.idleText, { fontSize: isTiny ? 12 : 13 }]}>
+                  Press START to begin
+                </Text>
               </View>
             )}
 
@@ -466,7 +529,7 @@ export default function FireRushScreen({ navigation }: any) {
                   {passed
                     ? round >= TOTAL_ROUNDS
                       ? 'All rounds finished.'
-                      : 'Next round is ready. Press START.'
+                      : 'Next round is ready.'
                     : `Need ${needed}+ to pass.`}
                 </Text>
 

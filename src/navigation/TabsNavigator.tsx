@@ -10,28 +10,24 @@ import SavedPlacesScreen from '../screens/SavedPlacesScreen';
 import FireRushScreen from '../screens/FireRushScreen';
 
 const Tab = createBottomTabNavigator<TabsParamList>();
+
 const ICON_HOME = require('../assets/tab_home.png');
 const ICON_PLACES = require('../assets/tab_pin.png');
 const ICON_QUIZ = require('../assets/tab_quiz.png');
 const ICON_FIRE = require('../assets/tab_fire.png');
 const ICON_SAVED = require('../assets/tab_bookmark.png');
 
-function TabIcon({
-  focused,
-  source,
-}: {
-  focused: boolean;
-  source: any;
-}) {
+function TabIcon({ focused, source }: { focused: boolean; source: any }) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Image source={source} style={[styles.icon, { tintColor: '#fff' }]} resizeMode="contain" />
+      <Image source={source} style={styles.icon} resizeMode="contain" />
     </View>
   );
 }
 
 function TabButton({ onPress, accessibilityState, children }: any) {
   const focused = !!accessibilityState?.selected;
+
   return (
     <Pressable
       onPress={onPress}
@@ -112,14 +108,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 20, 
+    bottom: Platform.OS === 'android' ? 60 : 40,
     height: 78,
-
-    backgroundColor: '#7A0000', 
+    backgroundColor: '#7A0000',
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: '#FFB45E', 
-
+    borderColor: '#FFB45E',
     paddingHorizontal: 14,
     paddingTop: 10,
     paddingBottom: 10,
@@ -129,7 +123,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-
   btn: {
     flex: 1,
     alignItems: 'center',
@@ -142,17 +135,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFB45E',
     backgroundColor: 'rgba(0,0,0,0)',
-
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   iconWrapActive: {
     backgroundColor: '#FFB45E',
   },
-
   icon: {
     width: 26,
     height: 26,
+    tintColor: '#fff',
   },
 });
