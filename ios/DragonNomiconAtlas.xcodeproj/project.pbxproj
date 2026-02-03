@@ -270,7 +270,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = DragonNomiconAtlas/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DraqonCast: Nomicon Atlas";
+				INFOPLIST_KEY_CFBundleDisplayName = "Dragon-Cast: Atlas Nomicon";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -282,7 +282,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ragomicolas.ihgfiomfddrtym;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gasertyhewv.kolyrokewder;
 				PRODUCT_NAME = DragonNomiconAtlas;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -303,7 +303,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = DragonNomiconAtlas/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DraqonCast: Nomicon Atlas";
+				INFOPLIST_KEY_CFBundleDisplayName = "Dragon-Cast: Atlas Nomicon";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -315,7 +315,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ragomicolas.ihgfiomfddrtym;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gasertyhewv.kolyrokewder;
 				PRODUCT_NAME = DragonNomiconAtlas;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

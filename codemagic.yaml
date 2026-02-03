@@ -8,10 +8,10 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.ragomicolas.ihgfiomfddrtym
+        bundle_identifier: com.gasertyhewv.kolyrokewder
       vars:
-        APP_STORE_APPLE_ID: 6758561609
-        BUNDLE_ID: 'com.ragomicolas.ihgfiomfddrtym'
+        APP_STORE_APPLE_ID: 6758653665
+        BUNDLE_ID: 'com.gasertyhewv.kolyrokewder'
         XCODE_WORKSPACE: 'DragonNomiconAtlas.xcworkspace'
         XCODE_SCHEME: 'DragonNomiconAtlas'
     scripts:
